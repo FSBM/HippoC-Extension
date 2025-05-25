@@ -4,6 +4,7 @@ import SearchPage from "./page/SearchPage";
 import Intro from "./page/IntroPage";
 import SearchResponse from "./page/SearchResultPage";
 import ResponsePage from "./page/ResponsePage";
+import SummarizePage from "./page/SummarizePage";
 import './index.css';
 
 
@@ -69,7 +70,7 @@ const AnimatedRoutes = () => {
 
       try {
         const accessToken = localStorage.getItem("access_token");
-
+        console.log("Access Token: ", accessToken);
 
         if (accessToken) {
           await chrome.cookies.set({
@@ -81,11 +82,11 @@ const AnimatedRoutes = () => {
           });
 
           await chrome.cookies.set({
-            url: 'https://hippocampus-backend.onrender.com',
+            url: 'https://hippocampus-backend-vvv9.onrender.com',
             name: 'access_token',
             value: accessToken,
             path: '/',
-            domain: 'hippocampus-backend.onrender.com'
+            domain: 'hippocampus-backend-vvv9.onrender.com'
           });
 
           const cookie = await chrome.cookies.get({
@@ -161,6 +162,7 @@ const AnimatedRoutes = () => {
         <Route path="/submit" element={<PageWrapper><ResponsePage /></PageWrapper>} />
         <Route path="/search" element={<PageWrapper><SearchPage Quote={quotes[Math.floor(Math.random() * quotes.length)]} /></PageWrapper>} />
         <Route path="/response" element={<PageWrapper><SearchResponse /></PageWrapper>} />
+        <Route path="/summarize" element={<PageWrapper><SummarizePage /></PageWrapper>} />
       </Routes>
     </AnimatePresence>
   );

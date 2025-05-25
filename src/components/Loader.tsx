@@ -5,8 +5,8 @@ const ColorChangingSpinner = () => {
   const blades = Array.from({ length: 12 }, (_, i) => i * 30);
   
   return (
-    <div className="flex justify-center items-center h-[12px] bg-transparent">
-      <div className="w-9 h-9 relative mt-[3px]">
+    <div className="flex justify-center items-center h-[12px] bg-transparent mt-[6px]">
+      <div className="w-9 h-9 relative">
         {blades.map((angle, index) => (
           <div
             key={angle}

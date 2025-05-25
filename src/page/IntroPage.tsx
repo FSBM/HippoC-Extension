@@ -2,7 +2,7 @@ import Button from "../components/Button";
 import Logo from '../assets/Logo.svg'
 import '../index.css'
 import { useNavigate } from 'react-router-dom';
-
+import {motion} from 'framer-motion';
 
 const Intro = () => {
     const Navigate = useNavigate();
@@ -21,7 +21,12 @@ const Intro = () => {
   }
 
   return (
-    <div className="h-[500px] w-[100%] relative border border-black rounded-lg overflow-hidden">
+    <motion.div 
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    transition={{ duration: 1.5, ease: "ease" }}
+    
+    className="h-[500px] w-[100%] relative border border-black rounded-lg overflow-hidden">
       
       <div className="absolute inset-0 flex">
         <div className="w-1/4 bg-[var(--primary-orange)]" />
@@ -46,7 +51,7 @@ const Intro = () => {
           <Button handle={handleAuth} text="GET STARTED" textColor="--primary-white"/>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

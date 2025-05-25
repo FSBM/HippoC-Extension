@@ -3,6 +3,8 @@ import InputForm from "../components/InputForm";
 import {  useEffect, useState } from "react";
 import { BiSearchAlt2 } from "react-icons/bi";
 import '../index.css';
+import isUrlHttp from "is-url-http";
+
 interface FormData {
   link: string;
   title: string;
@@ -13,21 +15,24 @@ export default function ResponsePage() {
 
   const [title, setTitle] = useState("Good Morning");
   const [subTxt, setSubTxt] = useState("User");
-  const [leftBtnTxt, setLftBtnTxt] = useState("CLEAR");
+  const [leftBtnTxt, setLftBtnTxt] = useState("SUMMARIZE");
   const [BtnTxtClr, setBtnTxtClr] = useState("--primary-yellow");
-  const [rightBtnTxt, setRtBtnTxt] = useState("SUBMIT");
+  const [rightBtnTxt, setRtBtnTxt] = useState("MEMORIZE");
   const [notSubmitted, setnotSubmitted] = useState(true);
   const [bgClr, setbgClr] = useState("--primary-yellow");
   const [isError, setisError] = useState('');
   const [showOnlyOne, setShowOnlyOne] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentTab, setCurrentTab] = useState("submit");
+  const [extraNote, setExtraNote] = useState("");
+  const [NotesTitle, setNotesTitle] = useState("");
 
   const Navigate = useNavigate();
   const [DoneNumber, setDoneNumber] = useState(0);
 
   function isValidURL(url:string) {
-   const simplePattern = /^(https?:\/\/)?[\w.-]+\.[a-z]{2,6}$/i;
-    return simplePattern.test(url);
+        console.log("The url is:", url ,"and it is valid", isUrlHttp(url));
+        return !isUrlHttp(url);
   }
 
 
@@ -47,7 +52,7 @@ export default function ResponsePage() {
   }, []);
 
   useEffect(() => {
-       chrome.cookies.get({url:'https://hippocampus-backend.onrender.com',name:'user_name'},(cookie)=>{
+       chrome.cookies.get({url:'https://hippocampus-backend-vvv9.onrender.com/',name:'user_name'},(cookie)=>{
         if(cookie){
           setSubTxt(cookie.value.replace(/"/g, "").split(" ")[0]);
       }
@@ -87,10 +92,11 @@ export default function ResponsePage() {
     e.preventDefault();
 
 
-    if (formData.link === "" || isValidURL(formData.link) || formData.title === "") {
+    if (currentTab === "submit" && (formData.link === "" || isValidURL(formData.link) || formData.title === "")) {
       setnotSubmitted(true);
       if(isValidURL(formData.link)){
         setisError("Enter a valid link!")
+        return
       }
       setisError("Link or Title missing!")
       return
@@ -100,7 +106,7 @@ export default function ResponsePage() {
       setisError('')
       setnotSubmitted(false);
 
-      chrome.runtime.sendMessage({ action: "submit", data: formData, cookies: localStorage.getItem("access_token") }, (response) => {
+     (currentTab === "submit" ? chrome.runtime.sendMessage({ action: "submit", data: formData, cookies: localStorage.getItem("access_token") }, (response) => {
         if (response) {
           setIsLoading(false);
           setbgClr("--primary-green")
@@ -120,9 +126,34 @@ export default function ResponsePage() {
           setBtnTxtClr("--primary-orange")
           setRtBtnTxt("RETRY :)")
         }
-      });
-
-
+      }) : (
+        chrome.runtime.sendMessage({ action: "saveNotes", data: {
+          title: NotesTitle,
+          note: extraNote
+        }, cookies: localStorage.getItem("access_token") }, (response) => {
+          if (response) {
+            setIsLoading(false);
+            setbgClr("--primary-green")
+            setTitle("Successful !")
+            setSubTxt("Your notes has been saved.")
+            setLftBtnTxt("CLOSE")
+            setBtnTxtClr("--primary-green")
+            setRtBtnTxt("HOME")
+            setShowOnlyOne(true)
+          } else {
+            setIsLoading(false);
+            console.error("API Error:", response);
+            setbgClr("--primary-orange")
+            setTitle("Error !")
+            setSubTxt("Something went wrong")
+            setLftBtnTxt("BACK")
+            setBtnTxtClr("--primary-orange")
+            setRtBtnTxt("RETRY :)")
+          }
+        })
+      )
+    
+     )
 
     }
 
@@ -143,18 +174,19 @@ export default function ResponsePage() {
       });
     }
     else{
-      setFormData({
-        link: '',
-        title: '',
-        note: ''
-      });
-      setbgClr("--primary-yellow")
-      setLftBtnTxt("CLEAR")
-      setBtnTxtClr("--primary-yellow")
-      setRtBtnTxt("SUBMIT")
-      setnotSubmitted(true);
-      setisError('')
-      setShowOnlyOne(false);
+      // setFormData({
+      //   link: '',
+      //   title: '',
+      //   note: ''
+      // });
+      // setbgClr("--primary-yellow")
+      // setLftBtnTxt("CLEAR")
+      // setBtnTxtClr("--primary-yellow")
+      // setRtBtnTxt("SUBMIT")
+      // setnotSubmitted(true);
+      // setisError('')
+      // setShowOnlyOne(false);
+      Navigate("/summarize");
     }
 
     
@@ -163,14 +195,14 @@ export default function ResponsePage() {
   return (
     <>
 
-      <div className={`max-w-md bg-[var(${bgClr})] rounded-lg px-9 w-[420px] h-[500px] flex flex-col justify-between py-14
+      <div className={`max-w-md bg-[var(${bgClr})] rounded-lg px-9 w-[420px] h-[500px] flex flex-col justify-between py-10
       border border-black`}>
 
 
         <div className="flex justify-between items-center mb-6 gap-2 ">
-          <div className='flex flex-col justify-end pl-1 -gap-2'>
+          <div className='flex flex-col justify-end  -gap-2'>
             <h1 className="text-[18px] font-NanumMyeongjo pr-2">{title}</h1>
-            <p className={`${(subTxt==="Your entry has been saved." || subTxt==="Something went wrong")?'text-[24px]':'text-[30px]'} text-black font-NanumMyeongjo mt-[-8px]`}>{subTxt}</p>
+            <p className={`${(subTxt==="Your entry has been saved." || subTxt==="Something went wrong")?'text-[24px]':'text-[28px]'} text-black font-NanumMyeongjo mt-[-8px]`}>{subTxt}</p>
           </div>
           {notSubmitted ?
             <div
@@ -210,7 +242,14 @@ export default function ResponsePage() {
           Error={isError}
           showOnlyOne={showOnlyOne}
           isLoading={isLoading}
+          currentTab={currentTab}
+          setCurrentTab={setCurrentTab}
+          extraNote={extraNote}
+          setExtraNote={setExtraNote}
+          NotesTitle={NotesTitle}
+          setNotesTitle={setNotesTitle}
         />
+        
       </div>
     </>
   );

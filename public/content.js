@@ -14,9 +14,40 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     sendResponse({success: true});
   }
-  return true; 
-});
+  if (message.action === "extractPageContent") {
+    const elements = Array.from(document.querySelectorAll('div, p, a'));
+    const seen = new Set();
+    let lines = elements
+      .filter(el => !el.querySelector('div, p, a'))
+      .filter(el => {
+        const style = window.getComputedStyle(el);
+        return (
+          el.offsetParent !== null &&
+          style.display !== "none" &&
+          style.visibility !== "hidden"
+        );
+      })
+      .map(el => el.textContent?.replace(/\s+/g, ' ').trim() || '')
+      .filter(text => text.length > 2 && !seen.has(text) && seen.add(text)); 
 
+    let content = lines.join('\n').replace(/\n{2,}/g, '\n');
+    chrome.runtime.sendMessage(
+      { action: "generateSummaryforContent", content: content, cookies: localStorage.getItem("access_token") },
+      (response) => {
+        if (response) {
+          console.log("Content sent to background script");
+          console.log("Summary:", response.data.summary);
+          sendResponse({ content: response.data.summary });
+        } else {
+          console.error("Failed to send content to background script");
+          sendResponse({ error: "Failed to send content to background script" });
+        }
+      }
+    );
+    return true;
+  }
+});
+  
 
 (() => {
   let sidebar = document.getElementById("my-extension-sidebar");
@@ -49,12 +80,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   iframe.style.width = "100%";
   iframe.style.height = "100%";
   iframe.style.border = "none";
+  
 
   sidebar.appendChild(iframe);
   document.body.appendChild(sidebar);
 
   document.addEventListener("click", handleClickOutside);
-  const closeExtension = async () => {
-    
-  }
+  
 })();
